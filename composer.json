@@ -1,0 +1,14 @@
+{
+    "name": "jean-destine/dungeon-crawler-game",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "JD"
+        }
+    ],
+    "require": {}
+}
