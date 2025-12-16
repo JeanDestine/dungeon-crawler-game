@@ -10,7 +10,7 @@ class Monster extends Character
     public function __construct(
         public string $name,
         public int $health = 100,
-        public CharacterType $type,
+        public CharacterType $type = CharacterType::MONSTER,
         public int $damage = 10
     ) {
         parent::__construct($name, $health, $type);

@@ -12,7 +12,15 @@ class Room
         public ?Monster $monster = null,
         public ?int $treasure = null,
         public bool $visited = false
-    ) {}
+    ) {
+        if ($this->type === Type::MONSTER && $this->monster === null) {
+            throw new \InvalidArgumentException("Monster room must have a monster.");
+        }
+
+        if ($this->type === Type::TREASURE && $this->treasure === null) {
+            throw new \InvalidArgumentException("Treasure room must have a treasure amount.");
+        }
+    }
 
     public function describe(): string
     {

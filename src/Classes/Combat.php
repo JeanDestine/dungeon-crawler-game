@@ -35,9 +35,6 @@ class Combat
                 $log[] = "{$this->defender->name} has been defeated!";
                 break;
             }
-
-            // Swap roles for next round
-            [$this->attacker, $this->defender] = [$this->defender, $this->attacker];
             $round++;
         }
 

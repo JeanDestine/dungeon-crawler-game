@@ -4,7 +4,7 @@ namespace App\IO;
 
 use App\Interfaces\IO;
 
-final class CliIO implements IO
+class CliIO implements IO
 {
     public function write(string $text): void
     {

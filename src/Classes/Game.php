@@ -1,15 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Classes;
 
 use App\Classes\Character\Player;
 use App\Interfaces\IO;
 use App\Enums\Room\Type as RoomType;
-use App\Enums\Character\Type as CharacterType;
 
-final class Game
+class Game
 {
     private Player $player;
     private Dungeon $dungeon;
@@ -45,39 +42,49 @@ final class Game
         $this->enterRoom(); // describe + resolve current tile
 
         while (true) {
-            if ($this->player->isDead()) {
-                $this->io->writeln();
-                $this->io->writeln("GAME OVER. Final score: {$this->player->score}");
-                return;
-            }
+            try {
+                if ($this->player->isDead()) {
+                    $this->io->writeln();
+                    $this->io->writeln("GAME OVER. Final score: {$this->player->score}");
+                    return;
+                }
 
-            $room = $this->dungeon->getRoomAtPosition($this->player->position);
-            if ($room->type === RoomType::EXIT) {
-                $this->io->writeln();
-                $this->io->writeln("You found the EXIT!");
-                $this->io->writeln("Final score: {$this->player->score}");
-                return;
-            }
+                $room = $this->dungeon->getRoomAtPosition($this->player->position);
 
-            $cmd = $this->io->read("> ");
-            if ($cmd === '') {
-                continue;
-            }
+                if ($room === null) {
+                    throw new \RuntimeException("Current room not found in dungeon data.");
+                }
 
-            if ($this->handleCommand($cmd)) {
-                continue;
-            }
+                if ($room->type === RoomType::EXIT) {
+                    $this->io->writeln();
+                    $this->io->writeln("You found the EXIT!");
+                    $this->io->writeln("Final score: {$this->player->score}");
+                    return;
+                }
 
-            $this->io->writeln("Unknown command. Type 'help'.");
+                $cmd = $this->io->read("> ");
+                if ($cmd === '') {
+                    continue;
+                }
+
+                if ($this->handleCommand($cmd)) {
+                    continue;
+                }
+
+                $this->io->writeln("Unknown command. Type 'help'.");
+            } catch (\Throwable $th) {
+                $this->io->writeln("An error occurred: " . $th->getMessage());
+                throw $th;
+            }
         }
     }
 
     private function newGame(): void
     {
-        $this->player = new Player('test', CharacterType::PLAYER);
+        $this->player = new Player('test');
         $this->dungeon = Dungeon::generate(5, 5);
 
-        $this->dungeon->markVisited($this->player->position);
+        $this->dungeon->markRoomVisited($this->player->position);
         $this->io->writeln("New game started. Find the exit (E).");
         $this->io->writeln();
     }
@@ -110,20 +117,25 @@ final class Game
     {
         $dx = 0;
         $dy = 0;
-        if ($direction === 'north') $dy = -1;
-        if ($direction === 'south') $dy = 1;
-        if ($direction === 'west')  $dx = -1;
-        if ($direction === 'east')  $dx = 1;
+
+        [$dx, $dy] = match ($direction) {
+            'north' => [0, 1],
+            'south' => [0, -1],
+            'west'  => [-1, 0],
+            'east'  => [1, 0],
+            default => [0, 0],
+        };
+
 
         $newPosition = $this->player->forecastedMove($dx, $dy);
 
-        if (!$this->dungeon->inBounds($newPosition)) {
+        if (!$this->dungeon->isPositionWithinBounds($newPosition)) {
             $this->io->writeln("You can't go that way.");
             return true;
         }
 
         $this->player->move($newPosition);
-        $this->dungeon->markVisited($newPosition);
+        $this->dungeon->markRoomVisited($newPosition);
 
         $this->enterRoom();
         return true;
@@ -187,7 +199,9 @@ final class Game
     private function stats(): bool
     {
         $inv = $this->player->inventory;
-        $invText = empty($inv) ? '(empty)' : implode(', ', $inv);
+        $invText = empty($inv) ?
+            '(empty)' :
+            implode(', ', array_map(fn($weapon) => $weapon->name, $inv));
 
         $this->io->writeln("HP: {$this->player->health}");
         $this->io->writeln("Score: {$this->player->score}");
@@ -198,7 +212,7 @@ final class Game
     private function map(): bool
     {
         $this->io->writeln($this->dungeon->renderVisitedMap($this->player->position->x, $this->player->position->y));
-        $this->io->writeln("Legend: @=you, ?=unknown, .=empty, M=monster room, T=treasure room, E=exit");
+        $this->io->writeln("Legend: @=you, ?=unknown, E=empty, M=monster room, T=treasure room, X=exit");
         return true;
     }
 
@@ -253,7 +267,7 @@ final class Game
         $this->dungeon = Dungeon::fromArray($data['dungeon'] ?? []);
 
         // Ensure current room is marked visited (just in case)
-        $this->dungeon->markVisited($this->player->position);
+        $this->dungeon->markRoomVisited($this->player->position);
 
         $this->io->writeln("Game loaded.");
         $this->enterRoom();

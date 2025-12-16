@@ -12,11 +12,11 @@ class Player extends Character
 {
     public function __construct(
         public string $name,
-        public CharacterType $type,
         public int $health = 100,
+        public CharacterType $type = CharacterType::PLAYER,
         public int $score = 0,
         public Weapon $weapon = new Fist(),
-        public mixed $inventory = [],
+        public array $inventory = [],
         public Position $position = new Position(0, 0)
     ) {
         parent::__construct($name, $health, $type);
@@ -25,8 +25,7 @@ class Player extends Character
 
     public function move(Position $delta): Position
     {
-        $this->position->x += $delta->x;
-        $this->position->y += $delta->y;
+        $this->position = $delta;
 
         return $this->position;
     }
@@ -51,7 +50,7 @@ class Player extends Character
             'score' => $this->score,
             'x' => $this->position->x,
             'y' => $this->position->y,
-            'inventory' => $this->inventory,
+            'inventory' => array_map(fn($weapon) => $weapon->toArray(), $this->inventory),
             'name' => $this->name,
             'weapon' => $this->weapon->toArray(),
         ];
@@ -71,7 +70,7 @@ class Player extends Character
             type: CharacterType::PLAYER,
         );
 
-        $p->inventory = array_values(array_map('strval', $data['inventory'] ?? []));
+        $p->inventory = array_values(array_map(fn($weaponData) => Weapon::fromArray($weaponData), $data['inventory'] ?? []));
         return $p;
     }
 }

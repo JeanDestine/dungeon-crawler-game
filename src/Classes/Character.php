@@ -3,6 +3,7 @@
 namespace App\Classes;
 
 use App\Enums\Character\Type;
+use InvalidArgumentException;
 
 class Character
 {
@@ -10,7 +11,11 @@ class Character
         public string $name,
         public int $health = 100,
         public Type $type
-    ) {}
+    ) {
+        if($health <= 0){
+            throw new InvalidArgumentException("Health must be greater than zero.");
+        }
+    }
 
     public function isDead(): bool
     {

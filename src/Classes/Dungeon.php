@@ -13,59 +13,55 @@ class Dungeon
         public array $rooms = [],
         public readonly Position $entrance,
         public readonly Position $exit,
-    ) {}
+    ) {
+        if ($width <= 0 || $height <= 0) {
+            throw new \InvalidArgumentException('Dungeon dimensions must be positive integers.');
+        }
+    }
 
     public static function generate(int $width, int $height): self
     {
-        // TODO: implement
-        // Start at (0,0) in logical space, but store as grid coordinates.
         $startPosition = new Position(0, 0);
         $exitPosition = new Position($width - 1, $height - 1);
-
-        $exitX = $width - 1;
-        $exitY = $height - 1;
-
-        $d = new self($width, $height, [], $startPosition, $exitPosition);
+        $dungeon = new self($width, $height, [], $startPosition, $exitPosition);
 
         // Fill rooms with content (simple, deterministic constraints: start is empty, exit is exit)
         for ($y = 0; $y < $height; $y++) {
             for ($x = 0; $x < $width; $x++) {
                 if ($x === $startPosition->x && $y === $startPosition->y) {
-                    $d->setRoomByPosition($startPosition, new Room(RoomType::EMPTY));
+                    $dungeon->setRoomByPosition($startPosition, new Room(RoomType::EMPTY));
                     continue;
                 }
                 if ($x === $exitPosition->x && $y === $exitPosition->y) {
-                    $d->setRoomByPosition($exitPosition, new Room(RoomType::EXIT));
+                    $dungeon->setRoomByPosition($exitPosition, new Room(RoomType::EXIT));
                     continue;
                 }
 
                 // Weighted random: monster 30%, treasure 25%, empty 45%
                 $r = random_int(1, 100);
                 if ($r <= 30) {
-                    $d->setRoomByPosition(new Position($x, $y), new Room(RoomType::MONSTER, monster: Monster::random()));
+                    $dungeon->setRoomByPosition(new Position($x, $y), new Room(RoomType::MONSTER, monster: Monster::random()));
                 } elseif ($r <= 55) {
-                    $d->setRoomByPosition(new Position($x, $y), new Room(RoomType::TREASURE, treasure: random_int(5, 25)));
+                    $dungeon->setRoomByPosition(new Position($x, $y), new Room(RoomType::TREASURE, treasure: random_int(5, 25)));
                 } else {
-                    $d->setRoomByPosition(new Position($x, $y), new Room(RoomType::EMPTY));
+                    $dungeon->setRoomByPosition(new Position($x, $y), new Room(RoomType::EMPTY));
                 }
             }
         }
 
-        return $d;
+        return $dungeon;
     }
 
     public function getRoomAtPosition(Position $position): ?Room
     {
-        //TODO: Refractor to use a more efficient lookup if necessary
         $key = $this->key($position);
         if (!isset($this->rooms[$key])) {
-            // Should not happen if generated correctly, but keep it safe.
-            $this->rooms[$key] = new Room(RoomType::EMPTY);
+            return null;
         }
         return $this->rooms[$key];
     }
 
-    public function inBounds(Position $position): bool
+    public function isPositionWithinBounds(Position $position): bool
     {
         return $position->x >= 0 && $position->x < $this->width &&
             $position->y >= 0 && $position->y < $this->height;
@@ -76,12 +72,12 @@ class Dungeon
         $this->rooms[$this->key($position)] = $room;
     }
 
-    public function markVisited(Position $position): void
+    public function markRoomVisited(Position $position): void
     {
         $room = $this->getRoomAtPosition($position);
-        if ($room !== null) {
-            // Throw exception
-            return;
+
+        if ($room === null) {
+            throw new \RuntimeException("No room found at position ({$position->x}, {$position->y}) to mark as visited.");
         }
 
         $room->visited = true;
@@ -111,9 +107,10 @@ class Dungeon
                 }
 
                 $row .= match ($room->type) {
-                    RoomType::EXIT => 'E ',
+                    RoomType::EXIT => 'X ',
                     RoomType::MONSTER => 'M ',
                     RoomType::TREASURE => 'T ',
+                    RoomType::EMPTY => 'E ',
                     default => '. ',
                 };
             }
