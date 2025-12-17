@@ -12,32 +12,44 @@ class Combat
         public readonly Monster $defender,
     ) {}
 
-    public function executeAttack(int $damage): void
+    public function executeAttack(int $damage, Character $target): void
     {
-        $this->defender->takeDamage($damage);
-    }
-
-    public function isDefenderDead(): bool
-    {
-        return $this->defender->isDead();
+        $target->takeDamage($damage);
     }
 
     public function fight(): array
     {
         $log = [];
         $round = 1;
+        $attacker = $this->attacker;
+        $defender = $this->defender;
 
-        while (!$this->isDefenderDead() && !$this->attacker->isDead()) {
-            $log[] = "Round {$round}: {$this->attacker->name} attacks {$this->defender->name} for {$this->attacker->weapon->damage} damage.";
-            $this->executeAttack($this->attacker->weapon->damage);
+        while (!$this->defender->isDead() && !$this->attacker->isDead()) {
+            $damage = $attacker instanceof Player ? $attacker->weapon->damage : $attacker->damage;
 
-            if ($this->isDefenderDead()) {
-                $log[] = "{$this->defender->name} has been defeated!";
+            $this->executeAttack($damage, $defender);
+            $player = $attacker instanceof Player ? $attacker : $defender;
+            $monster = $attacker instanceof Monster ? $attacker : $defender;
+
+            $damageInfo = "\t\t\t {$player->name} has {$player->health} HP remaining. \t\t\t {$monster->name} has {$monster->health} HP remaining.";
+            $log[] = "Round {$round}: " . $damageInfo;
+
+            if ($defender->isDead()) {
+                $log[] = "{$defender->name} has been defeated!";
                 break;
             }
+
+            // Swap roles
+            [$attacker, $defender] = $this->determineNewRole($attacker, $defender);
             $round++;
         }
 
         return $log;
+    }
+
+    private function determineNewRole(Character $currentAttacker, Character $currentDefender): array
+    {
+        $randomValue = random_int(1, 100);
+        return  $randomValue % 2 === 0 ? [$currentAttacker, $currentDefender] : [$currentDefender, $currentAttacker];
     }
 }

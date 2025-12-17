@@ -10,6 +10,7 @@ use App\Enums\Character\Type as CharacterType;
 
 class Player extends Character
 {
+    private int $maxHealth;
     public function __construct(
         public string $name,
         public int $health = 100,
@@ -21,6 +22,7 @@ class Player extends Character
     ) {
         parent::__construct($name, $health, $type);
         $this->inventory[] = $this->weapon;
+        $this->maxHealth = $health;
     }
 
     public function move(Position $delta): Position
@@ -41,6 +43,14 @@ class Player extends Character
     public function addTreasure(int $amount): void
     {
         $this->score += $amount;
+    }
+
+    public function heal(int $amount): void
+    {
+        $this->health += $amount;
+        if ($this->health > $this->maxHealth) {
+            $this->health = $this->maxHealth;
+        }
     }
 
     public function toArray(): array

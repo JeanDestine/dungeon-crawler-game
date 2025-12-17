@@ -10,11 +10,13 @@ use ReflectionClass;
 class GameTest extends TestCase
 {
     private string $savePath;
+    private mixed $io;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->io = $this->getMockIO(['name', '1']);
         $this->savePath = sys_get_temp_dir() . '/game_test_save.json';
         @unlink($this->savePath);
     }
@@ -27,9 +29,7 @@ class GameTest extends TestCase
 
     public function testNewGameInitializesPlayerAndDungeon(): void
     {
-        $io = $this->getMockIO();
-
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $this->invokePrivateMethod($game, 'newGame');
 
@@ -38,9 +38,7 @@ class GameTest extends TestCase
 
     public function testSaveCreatesSaveFile(): void
     {
-        $io = $this->getMockIO();
-
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $this->invokePrivateMethod($game, 'newGame');
         $this->invokePrivateMethod($game, 'save');
@@ -50,9 +48,7 @@ class GameTest extends TestCase
 
     public function testSaveWritesValidJson(): void
     {
-        $io = $this->getMockIO();
-
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $this->invokePrivateMethod($game, 'newGame');
         $this->invokePrivateMethod($game, 'save');
@@ -68,17 +64,15 @@ class GameTest extends TestCase
 
     public function testLoadRestoresSavedGame(): void
     {
-        $io = $this->getMockIO();
-
         // First game → save
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
         $this->invokePrivateMethod($game, 'newGame');
         $this->invokePrivateMethod($game, 'save');
 
         $this->assertFileExists($this->savePath);
 
         // Second game → load
-        $loadedGame = new Game($io, $this->savePath);
+        $loadedGame = new Game($this->io, $this->savePath);
         $result = $this->invokePrivateMethod($loadedGame, 'load');
 
         $this->assertTrue($result);
@@ -86,9 +80,7 @@ class GameTest extends TestCase
 
     public function testLoadHandlesMissingFile(): void
     {
-        $io = $this->getMockIO();
-
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $result = $this->invokePrivateMethod($game, 'load');
 
@@ -97,9 +89,7 @@ class GameTest extends TestCase
 
     public function testMoveOutsideDungeonIsBlocked(): void
     {
-        $io = $this->getMockIO();
-
-        $io->expects($this->atLeastOnce())
+        $this->io->expects($this->atLeastOnce())
             ->method('writeln')
             ->with($this->logicalOr(
                 $this->stringContains('New game started'),
@@ -107,7 +97,7 @@ class GameTest extends TestCase
                 $this->anything()
             ));
 
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $this->invokePrivateMethod($game, 'newGame');
 
@@ -117,12 +107,10 @@ class GameTest extends TestCase
 
     public function testLookCommandOutputsRoomDescription(): void
     {
-        $io = $this->getMockIO();
-
-        $io->expects($this->atLeastOnce())
+        $this->io->expects($this->atLeastOnce())
             ->method('writeln');
 
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $this->invokePrivateMethod($game, 'newGame');
         $result = $this->invokePrivateMethod($game, 'look');
@@ -132,12 +120,10 @@ class GameTest extends TestCase
 
     public function testStatsCommandOutputsPlayerStats(): void
     {
-        $io = $this->getMockIO();
-
-        $io->expects($this->atLeastOnce())
+        $this->io->expects($this->atLeastOnce())
             ->method('writeln');
 
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $this->invokePrivateMethod($game, 'newGame');
         $result = $this->invokePrivateMethod($game, 'stats');
@@ -147,19 +133,17 @@ class GameTest extends TestCase
 
     public function testHelpCommandOutputsHelpText(): void
     {
-        $io = $this->getMockIO();
-
-        $io->expects($this->atLeastOnce())
+        $this->io->expects($this->atLeastOnce())
             ->method('writeln')
             ->with($this->logicalOr(
                 $this->stringContains('Commands'),
-                $this->stringContains('north/south/east/west'),
+                $this->stringContains('a/w/s/d'),
                 $this->stringContains('look, stats, map'),
                 $this->stringContains('save, load'),
                 $this->stringContains('help, quit')
             ));
 
-        $game = new Game($io, $this->savePath);
+        $game = new Game($this->io, $this->savePath);
 
         $result = $this->invokePrivateMethod($game, 'help');
 

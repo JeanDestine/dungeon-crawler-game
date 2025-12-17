@@ -24,6 +24,6 @@ class CliIO implements IO
             return '';
         }
 
-        return strtolower(trim($line));
+        return trim($line);
     }
 }

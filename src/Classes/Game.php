@@ -8,6 +8,12 @@ use App\Enums\Room\Type as RoomType;
 
 class Game
 {
+    const GAME_DIFFICULTY = [
+        '1' => 5,
+        '2' => 7,
+        '3' => 10,
+    ];
+
     private Player $player;
     private Dungeon $dungeon;
 
@@ -20,7 +26,6 @@ class Game
     {
         $this->io->writeln("=== Text Dungeon (PHP) ===");
         $this->io->writeln("Type 'help' for commands.");
-        $this->io->writeln();
 
         // Start new game by default, but offer load if save exists.
         if (is_file($this->savePath)) {
@@ -79,10 +84,34 @@ class Game
         }
     }
 
+    private function gameSetup(): array
+    {
+        $this->io->writeln("Please input your character name:");
+        $name = trim($this->io->read("Name: "));
+
+        // TODO: validate name
+        if (empty($name)) {
+            $this->io->writeln("Invalid name. Please try again.");
+        }
+
+        $this->io->writeln("Welcome, {$name}!");
+        $this->io->writeln('Please select difficulty: (1) Easy, (2) Medium, (3) Hard');
+        $difficulty = trim($this->io->read("Difficulty (1-3): "));
+
+        if (!in_array($difficulty, ['1', '2', '3'], true)) {
+            $this->io->writeln("Invalid difficulty. Defaulting to Medium.");
+            $difficulty = '2';
+        }
+
+        return [$difficulty, new Player($name)];
+    }
+
     private function newGame(): void
     {
-        $this->player = new Player('test');
-        $this->dungeon = Dungeon::generate(5, 5);
+        [$difficulty, $player] = $this->gameSetup();
+        $dungeonSize = self::GAME_DIFFICULTY[$difficulty] ?? 7;
+        $this->player = $player;
+        $this->dungeon = Dungeon::generate($dungeonSize, $dungeonSize);
 
         $this->dungeon->markRoomVisited($this->player->position);
         $this->io->writeln("New game started. Find the exit (E).");
@@ -91,24 +120,26 @@ class Game
 
     private function handleCommand(string $cmd): bool
     {
+        $cmd = strtolower($cmd);
         // Movement aliases
         $cmd = match ($cmd) {
-            'n' => 'north',
-            's' => 'south',
-            'e' => 'east',
-            'w' => 'west',
+            // WASD controls
+            'w' => 'up',
+            'a' => 'left',
+            's' => 'down',
+            'd' => 'right',
             default => $cmd,
         };
 
         return match ($cmd) {
-            'north', 'south', 'east', 'west' => $this->move($cmd),
+            'up', 'down', 'left', 'right' => $this->move($cmd),
             'look' => $this->look(),
             'stats' => $this->stats(),
             'map' => $this->map(),
             'help' => $this->help(),
             'save' => $this->save(),
             'load' => $this->load(),
-            'quit', 'exit' => $this->quit(),
+            'quit', 'exit', 'q' => $this->quit(),
             default => false,
         };
     }
@@ -119,13 +150,12 @@ class Game
         $dy = 0;
 
         [$dx, $dy] = match ($direction) {
-            'north' => [0, 1],
-            'south' => [0, -1],
-            'west'  => [-1, 0],
-            'east'  => [1, 0],
+            'up' => [0, 1],
+            'down' => [0, -1],
+            'left'  => [-1, 0],
+            'right'  => [1, 0],
             default => [0, 0],
         };
-
 
         $newPosition = $this->player->forecastedMove($dx, $dy);
 
@@ -149,44 +179,55 @@ class Game
         $this->io->writeln("You are in room ({$this->player->position->x},{$this->player->position->y}).");
         $this->io->writeln($room->describe());
 
-        // Resolve encounter once (if treasure/monster still present)
-        if ($room->type === RoomType::TREASURE && $room->treasure > 0) {
-            $amount = $room->treasure;
-            $this->player->addTreasure($amount);
-
-            $this->io->writeln("You collect treasure worth {$amount}. Score: {$this->player->score}");
-
-            // Treasure consumed -> room becomes empty
-            $room->treasure = 0;
-            $room->type = RoomType::EMPTY;
-            $this->dungeon->setRoomByPosition($this->player->position, $room);
-        }
-
-        if ($room->type === RoomType::MONSTER && $room->monster !== null && !$room->monster->isDead()) {
-            $combat = new Combat($this->player, $room->monster);
-            $log = $combat->fight();
-            foreach ($log as $line) {
-                $this->io->writeln($line);
-            }
-
-            if ($room->monster->isDead()) {
-                // Monster defeated -> room becomes empty
-                $room->monster = null;
-                $room->type = RoomType::EMPTY;
-                $this->dungeon->setRoomByPosition($this->player->position, $room);
-
-                // Small reward
-                $bonus = random_int(3, 10);
-                $this->player->addTreasure($bonus);
-                $this->io->writeln("You find {$bonus} coins on the corpse. Score: {$this->player->score}");
-            }
-        }
-
         if ($room->type === RoomType::EXIT) {
             $this->io->writeln("One step more and you'll be out...");
         }
 
+        if ($room->type === RoomType::TREASURE && $room->treasure > 0) {
+            $this->processTreasureRoom($room);
+        }
+
+        if ($room->type === RoomType::MONSTER && $room->monster !== null && !$room->monster->isDead()) {
+            $this->processMonsterRoom($room);
+        }
+
         $this->io->writeln();
+    }
+
+    private function processTreasureRoom(Room $room): void
+    {
+        $amount = $room->treasure;
+
+        $this->player->addTreasure($amount);
+        $this->dungeon->setRoomByPosition($this->player->position, $room);
+        $this->io->writeln("You collect treasure worth {$amount}. Score: {$this->player->score}");
+
+        $room->treasure = 0;
+    }
+
+    private function processMonsterRoom(Room $room): void
+    {
+        $monsterHealth = $room->monster->health;
+        $combat = new Combat($this->player, $room->monster);
+        $log = $combat->fight();
+        foreach ($log as $line) {
+            $this->io->writeln($line);
+            sleep(1); // pause for dramatic effect and readability
+        }
+
+        if ($room->monster->isDead()) {
+            $room->monster = null;
+            $this->dungeon->setRoomByPosition($this->player->position, $room);
+
+            $healAmount = random_int(10, (int)($monsterHealth / 3));
+            $this->player->heal($healAmount);
+            $this->io->writeln("You feel reinvigorated and recovered, new health: {$this->player->health} HP (+{$healAmount})");
+
+            // Small reward
+            $bonus = random_int(3, 10);
+            $this->player->addTreasure($bonus);
+            $this->io->writeln("You find {$bonus} coins on the corpse. Score: {$this->player->score}");
+        }
     }
 
     private function look(): bool
@@ -219,7 +260,7 @@ class Game
     private function help(): bool
     {
         $this->io->writeln("Commands:");
-        $this->io->writeln("  north/south/east/west (or n/s/e/w) ");
+        $this->io->writeln("  Movement: a/w/s/d (left/up/down/right)");
         $this->io->writeln("  look, stats, map");
         $this->io->writeln("  save, load");
         $this->io->writeln("  help, quit");

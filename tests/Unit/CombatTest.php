@@ -21,13 +21,13 @@ class CombatTest extends TestCase
     public function testExecuteDamageToMonster(): void
     {
         $damage = 25;
-        $this->combat->executeAttack($damage);
+        $this->combat->executeAttack($damage, $this->monster);
         $this->assertEquals((50 - $damage), $this->monster->health);
-        $this->assertFalse($this->combat->isDefenderDead());
+        $this->assertFalse($this->combat->defender->isDead());
 
-        $this->combat->executeAttack($damage);
+        $this->combat->executeAttack($damage, $this->monster);
         $this->assertEquals((50 - 2 * $damage), $this->monster->health);
-        $this->assertTrue($this->combat->isDefenderDead());
+        $this->assertTrue($this->combat->defender->isDead());
     }
 
     public function testFightUntilMonsterDefeated(): void
@@ -35,7 +35,7 @@ class CombatTest extends TestCase
         $log = $this->combat->fight();
 
         $this->assertNotEmpty($log);
-        $this->assertTrue($this->combat->isDefenderDead());
+        $this->assertTrue($this->combat->defender->isDead());
         $this->assertStringContainsString('has been defeated', end($log));
     }
 }
