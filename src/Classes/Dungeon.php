@@ -10,20 +10,20 @@ class Dungeon
     public function __construct(
         public readonly int $width,
         public readonly int $height,
-        public array $rooms = [],
         public readonly Position $entrance,
         public readonly Position $exit,
+        public array $rooms = [],
     ) {
         if ($width <= 0 || $height <= 0) {
             throw new \InvalidArgumentException('Dungeon dimensions must be positive integers.');
         }
     }
 
-    public static function generate(int $width, int $height): self
+    public static function generate(int $width, int $height, int $difficulty): self
     {
         $startPosition = new Position(0, 0);
         $exitPosition = new Position($width - 1, $height - 1);
-        $dungeon = new self($width, $height, [], $startPosition, $exitPosition);
+        $dungeon = new self($width, $height, $startPosition, $exitPosition);
 
         // Fill rooms with content (simple, deterministic constraints: start is empty, exit is exit)
         for ($y = 0; $y < $height; $y++) {
@@ -40,7 +40,7 @@ class Dungeon
                 // Weighted random: monster 30%, treasure 25%, empty 45%
                 $r = random_int(1, 100);
                 if ($r <= 30) {
-                    $dungeon->setRoomByPosition(new Position($x, $y), new Room(RoomType::MONSTER, monster: Monster::random()));
+                    $dungeon->setRoomByPosition(new Position($x, $y), new Room(RoomType::MONSTER, monster: Monster::random($difficulty)));
                 } elseif ($r <= 55) {
                     $dungeon->setRoomByPosition(new Position($x, $y), new Room(RoomType::TREASURE, treasure: random_int(5, 25)));
                 } else {

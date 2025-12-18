@@ -14,7 +14,7 @@ class CombatTest extends TestCase
 
     public function setUp(): void
     {
-        $this->monster = new Monster('Goblin', 50);
+        $this->monster = new Monster('Goblin', health: 50);
         $this->player = new Player('Test');
         $this->combat = new Combat($this->player, $this->monster);
     }

@@ -9,8 +9,8 @@ class Character
 {
     public function __construct(
         public string $name,
-        public int $health = 100,
-        public Type $type
+        public Type $type,
+        public int $health = 100
     ) {
         if($health <= 0){
             throw new InvalidArgumentException("Health must be greater than zero.");

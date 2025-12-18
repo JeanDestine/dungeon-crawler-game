@@ -10,7 +10,7 @@ class MonsterTest extends TestCase
 {
     public function testMonsterCharacterCanBeCreated(): void
     {
-        $monster = new Monster('Monster', 150);
+        $monster = new Monster('Monster', health:150);
 
         $this->assertInstanceOf(Monster::class, $monster);
         $this->assertEquals('Monster', $monster->name);
@@ -20,7 +20,7 @@ class MonsterTest extends TestCase
 
     public function testMonsterToArrayAndFromArray(): void
     {
-        $monster = new Monster('Monster', 150, Type::MONSTER);
+        $monster = new Monster('Monster', Type::MONSTER, 150);
         $monster->takeDamage(30);
 
         $monsterArray = $monster->toArray();

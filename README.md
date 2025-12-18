@@ -21,8 +21,8 @@ A PHP-based command-line dungeon crawler game where you explore dungeons, fight 
 
 2. **Build and run with Docker:**
     ```bash
-    docker build -t dungeon-game .
-    docker run -it dungeon-game
+    docker build -t dungeon-game:game --target game .
+    docker run -it -v dungeon-saves:/app/var dungeon-game:game
     ```
 
 ### Option 2: Manual Installation
@@ -50,8 +50,8 @@ A PHP-based command-line dungeon crawler game where you explore dungeons, fight 
 ### With Docker:
 
 ```bash
-docker build -t dungeon-game .
-docker run -it dungeon-game ./vendor/bin/phpunit tests
+docker build -t dungeon-game:test --target test .
+docker run -it dungeon-game:test
 ```
 
 ### Manual:

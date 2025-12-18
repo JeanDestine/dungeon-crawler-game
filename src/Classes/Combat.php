@@ -32,7 +32,7 @@ class Combat
             $monster = $attacker instanceof Monster ? $attacker : $defender;
 
             $damageInfo = "\t\t\t {$player->name} has {$player->health} HP remaining. \t\t\t {$monster->name} has {$monster->health} HP remaining.";
-            $log[] = "Round {$round}: " . $damageInfo;
+            $log[] = "Round {$round}: {$attacker->name} attacks {$defender->name} for {$damage} damage. " . $damageInfo;
 
             if ($defender->isDead()) {
                 $log[] = "{$defender->name} has been defeated!";

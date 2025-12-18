@@ -13,14 +13,14 @@ class Player extends Character
     private int $maxHealth;
     public function __construct(
         public string $name,
-        public int $health = 100,
         public CharacterType $type = CharacterType::PLAYER,
+        public int $health = 100,
         public int $score = 0,
         public Weapon $weapon = new Fist(),
         public array $inventory = [],
         public Position $position = new Position(0, 0)
     ) {
-        parent::__construct($name, $health, $type);
+        parent::__construct($name, $type, $health);
         $this->inventory[] = $this->weapon;
         $this->maxHealth = $health;
     }

@@ -86,6 +86,8 @@ class Game
 
     private function gameSetup(): array
     {
+        $this->help();
+        $this->io->writeln("\n");
         $this->io->writeln("Please input your character name:");
         $name = trim($this->io->read("Name: "));
 
@@ -109,9 +111,14 @@ class Game
     private function newGame(): void
     {
         [$difficulty, $player] = $this->gameSetup();
+
+        if (!isset(self::GAME_DIFFICULTY[$difficulty])) {
+            $difficulty = '2';
+        }
+
         $dungeonSize = self::GAME_DIFFICULTY[$difficulty] ?? 7;
         $this->player = $player;
-        $this->dungeon = Dungeon::generate($dungeonSize, $dungeonSize);
+        $this->dungeon = Dungeon::generate($dungeonSize, $dungeonSize, (int)$difficulty);
 
         $this->dungeon->markRoomVisited($this->player->position);
         $this->io->writeln("New game started. Find the exit (E).");
@@ -150,8 +157,8 @@ class Game
         $dy = 0;
 
         [$dx, $dy] = match ($direction) {
-            'up' => [0, 1],
-            'down' => [0, -1],
+            'up' => [0, -1],
+            'down' => [0, 1],
             'left'  => [-1, 0],
             'right'  => [1, 0],
             default => [0, 0],
@@ -203,6 +210,7 @@ class Game
         $this->io->writeln("You collect treasure worth {$amount}. Score: {$this->player->score}");
 
         $room->treasure = 0;
+        $room->type = RoomType::EMPTY;
     }
 
     private function processMonsterRoom(Room $room): void
@@ -217,9 +225,10 @@ class Game
 
         if ($room->monster->isDead()) {
             $room->monster = null;
+            $room->type = RoomType::EMPTY;
             $this->dungeon->setRoomByPosition($this->player->position, $room);
 
-            $healAmount = random_int(10, (int)($monsterHealth / 3));
+            $healAmount = random_int(10, max(10, (int)($monsterHealth / 2)));
             $this->player->heal($healAmount);
             $this->io->writeln("You feel reinvigorated and recovered, new health: {$this->player->health} HP (+{$healAmount})");
 
@@ -261,9 +270,13 @@ class Game
     {
         $this->io->writeln("Commands:");
         $this->io->writeln("  Movement: a/w/s/d (left/up/down/right)");
-        $this->io->writeln("  look, stats, map");
-        $this->io->writeln("  save, load");
-        $this->io->writeln("  help, quit");
+        $this->io->writeln("  look: Describes the current room");
+        $this->io->writeln("  stats: Shows player stats");
+        $this->io->writeln("  map: Displays the dungeon map");
+        $this->io->writeln("  save: Saves the current game");
+        $this->io->writeln("  load: Loads a saved game");
+        $this->io->writeln("  help: Shows this help message");
+        $this->io->writeln("  quit: Exits the game");
         return true;
     }
 

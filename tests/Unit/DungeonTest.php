@@ -11,7 +11,7 @@ class DungeonTest extends TestCase
 {
     public function testDungeonCanBeCreated(): void
     {
-        $dungeon = Dungeon::generate(5, 5);
+        $dungeon = Dungeon::generate(5, 5, rand(1, 3));
         $this->assertInstanceOf(Dungeon::class, $dungeon);
         $this->assertGreaterThan(0, count($dungeon->rooms));
 
@@ -38,7 +38,7 @@ class DungeonTest extends TestCase
 
     public function testDungeonToArrayAndFromArray(): void
     {
-        $dungeon = Dungeon::generate(4, 4);
+        $dungeon = Dungeon::generate(4, 4, rand(1, 3));
         $dungeonArray = $dungeon->toArray();
         $restoredDungeon = Dungeon::fromArray($dungeonArray);
 
@@ -49,7 +49,7 @@ class DungeonTest extends TestCase
 
     public function testDungeonStartAndExitPositions(): void
     {
-        $dungeon = Dungeon::generate(6, 6);
+        $dungeon = Dungeon::generate(6, 6, rand(1, 3));
 
         $this->assertEquals(0, $dungeon->entrance->x);
         $this->assertEquals(0, $dungeon->entrance->y);
@@ -60,18 +60,18 @@ class DungeonTest extends TestCase
     public function testDungeonInvalidDimensions(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        Dungeon::generate(0, 5);
+        Dungeon::generate(0, 5, rand(1, 3));
 
         $this->expectException(\InvalidArgumentException::class);
-        Dungeon::generate(5, -3);
+        Dungeon::generate(5, -3, rand(1, 3));
 
         $this->expectException(\InvalidArgumentException::class);
-        Dungeon::generate(-rand(1, 10), -rand(1, 10));
+        Dungeon::generate(-rand(1, 10), -rand(1, 10), rand(1, 3));
     }
 
     public function testDungeonRoomRetrieval(): void
     {
-        $dungeon = Dungeon::generate(3, 3);
+        $dungeon = Dungeon::generate(3, 3, rand(1, 3));
         $position = $dungeon->entrance;
         $room = $dungeon->getRoomAtPosition($position);
 
@@ -82,7 +82,7 @@ class DungeonTest extends TestCase
 
     public function testDungeonRoomSetting(): void
     {
-        $dungeon = Dungeon::generate(3, 3);
+        $dungeon = Dungeon::generate(3, 3, rand(1, 3));
         $newRoom = $dungeon->getRoomAtPosition($dungeon->entrance);
         $position = $dungeon->entrance;
 
@@ -94,7 +94,7 @@ class DungeonTest extends TestCase
 
     public function testDungeonMarkRoomVisited(): void
     {
-        $dungeon = Dungeon::generate(3, 3);
+        $dungeon = Dungeon::generate(3, 3, rand(1, 3));
         $position = $dungeon->entrance;
 
         $dungeon->markRoomVisited($position);
@@ -145,7 +145,7 @@ MAP;
         $startPosition = new Position(0, 0);
         $exitPosition  = new Position(3, 3);
 
-        $dungeon = new Dungeon($width, $height, [], $startPosition, $exitPosition);
+        $dungeon = new Dungeon($width, $height, $startPosition, $exitPosition);
 
         // Define dungeon layout (y, x)
         $layout = [
@@ -172,7 +172,7 @@ MAP;
 
                     'M' => $dungeon->setRoomByPosition(
                         $position,
-                        new Room(RoomType::MONSTER, monster: Monster::random())
+                        new Room(RoomType::MONSTER, monster: Monster::random(rand(1, 3)))
                     ),
 
                     'T' => $dungeon->setRoomByPosition(

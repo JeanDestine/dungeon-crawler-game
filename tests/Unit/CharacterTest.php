@@ -12,7 +12,7 @@ class CharacterTest extends TestCase
 {
     public function testPlayerCharacterCanBeCreated(): void
     {
-        $character = new Character('PlayerCharacter', 100, Type::PLAYER);
+        $character = new Character('PlayerCharacter', Type::PLAYER, 100);
 
         $this->assertInstanceOf(Character::class, $character);
         $this->assertEquals('PlayerCharacter', $character->name);
@@ -22,7 +22,7 @@ class CharacterTest extends TestCase
 
     public function testMonsterCharacterCanBeCreated(): void
     {
-        $character = new Character('MonsterCharacter', 100, Type::MONSTER);
+        $character = new Character('MonsterCharacter', Type::MONSTER, 100);
 
         $this->assertInstanceOf(Character::class, $character);
         $this->assertEquals('MonsterCharacter', $character->name);
@@ -33,20 +33,20 @@ class CharacterTest extends TestCase
     public function testExceptionThrownForNullCharacterType(): void
     {
         $this->expectException(Throwable::class);
-        new Character('InvalidCharacter', 100, null);
+        new Character('InvalidCharacter', null, 100);
     }
 
     public function testExceptionThrownForInvalidCharacterType(): void
     {
         $this->expectException(Throwable::class);
-        new Character('InvalidCharacter', 100, 'INVALID_TYPE');
+        new Character('InvalidCharacter', 'INVALID_TYPE', 100);
     }
 
     public function testCharacterCanTakeDamage(): void
     {
         $initialHealth = 100;
         $damage = 30;
-        $character = new Character('TestCharacter', $initialHealth, Type::PLAYER);
+        $character = new Character('TestCharacter', Type::PLAYER, $initialHealth);
         $character->takeDamage($damage);
 
         $this->assertEquals(($initialHealth - $damage), $character->health);
@@ -56,7 +56,7 @@ class CharacterTest extends TestCase
     {
         $initialHealth = 50;
         $damage = 100;
-        $character = new Character('TestCharacter', $initialHealth, Type::PLAYER);
+        $character = new Character('TestCharacter', Type::PLAYER, $initialHealth);
         $character->takeDamage($damage);
 
         $this->assertEquals(0, $character->health);
@@ -66,12 +66,12 @@ class CharacterTest extends TestCase
     public function testCharacterCannotBeCreatedWithZeroHealth(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new Character('TestCharacter', 0, Type::PLAYER);
+        new Character('TestCharacter', Type::PLAYER, 0);
     }
 
     public function testCharacterIsNotDeadWhenHealthIsAboveZero(): void
     {
-        $character = new Character('TestCharacter', 50, Type::PLAYER);
+        $character = new Character('TestCharacter', Type::PLAYER, 50);
 
         $this->assertFalse($character->isDead());
     }

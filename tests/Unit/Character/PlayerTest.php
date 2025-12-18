@@ -13,7 +13,7 @@ class PlayerTest extends TestCase
     {
         $deltaX = 5;
         $deltaY = -3;
-        $player = new Player('Hero', 100);
+        $player = new Player('Hero', health: 100);
         $initialPosition = $player->position;
 
         $delta = new Position($deltaX, $deltaY);
@@ -27,7 +27,7 @@ class PlayerTest extends TestCase
 
     public function testPlayerScoreIncrement(): void
     {
-        $player = new Player('Hero', 100);
+        $player = new Player('Hero', health: 100);
         $initialScore = $player->score;
 
         $player->addTreasure(50);
@@ -37,7 +37,7 @@ class PlayerTest extends TestCase
 
     public function testPlayerToArrayAndFromArray(): void
     {
-        $player = new Player('Hero', 100, Type::PLAYER);
+        $player = new Player('Hero', Type::PLAYER, 100);
         $player->addTreasure(100);
         $player->move(new Position(2, 3));
 

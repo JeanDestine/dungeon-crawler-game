@@ -9,19 +9,19 @@ class Monster extends Character
 {
     public function __construct(
         public string $name,
-        public int $health = 100,
         public CharacterType $type = CharacterType::MONSTER,
+        public int $health = 100,
         public int $damage = 10
     ) {
-        parent::__construct($name, $health, $type);
+        parent::__construct($name, $type, $health);
     }
 
-    public static function random(): self
+    public static function random(int $difficulty): self
     {
         $monsters = [
-            new Monster('Goblin', 50, CharacterType::MONSTER, 5),
-            new Monster('Orc', 80, CharacterType::MONSTER, 15),
-            new Monster('Troll', 120, CharacterType::MONSTER, 20),
+            new Monster('Goblin', CharacterType::MONSTER, ($difficulty * 25), (5 * $difficulty)),
+            new Monster('Orc', CharacterType::MONSTER, ($difficulty * 50), (10 * $difficulty)),
+            new Monster('Troll', CharacterType::MONSTER, ($difficulty * 100), (20 * $difficulty)),
         ];
 
         return $monsters[array_rand($monsters)];

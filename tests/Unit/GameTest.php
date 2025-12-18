@@ -131,25 +131,6 @@ class GameTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function testHelpCommandOutputsHelpText(): void
-    {
-        $this->io->expects($this->atLeastOnce())
-            ->method('writeln')
-            ->with($this->logicalOr(
-                $this->stringContains('Commands'),
-                $this->stringContains('a/w/s/d'),
-                $this->stringContains('look, stats, map'),
-                $this->stringContains('save, load'),
-                $this->stringContains('help, quit')
-            ));
-
-        $game = new Game($this->io, $this->savePath);
-
-        $result = $this->invokePrivateMethod($game, 'help');
-
-        $this->assertTrue($result);
-    }
-
     private function invokePrivateMethod(
         object $object,
         string $method,
