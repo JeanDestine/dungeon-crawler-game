@@ -21,12 +21,16 @@ class Weapon
         ];
     }
 
-    public static function fromArray(array $data): self
+    public static function fromArray(array $data): ?self
     {
-        return new self(
-            name: $data['name'],
-            damage: $data['damage'],
-            type: Type::from($data['type']),
-        );
+        try {
+            return new self(
+                name: $data['name'],
+                damage: $data['damage'],
+                type: Type::from($data['type'])
+            );
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

@@ -39,11 +39,24 @@ class Monster extends Character
 
     public static function fromArray(array $data): self
     {
+        if (empty($data)) {
+            return self::defaultMonster();
+        }
+
         return new self(
-            name: $data['name'],
-            health: $data['health'],
-            type: CharacterType::from($data['type']),
-            damage: $data['damage'],
+            name: $data['name'] ?? 'Goblin',
+            health: $data['health'] ?? 50,
+            type: CharacterType::MONSTER,
+            damage: $data['damage'] ?? 5,
+        );
+    }
+
+    private static function defaultMonster(): self
+    {
+        return new self(
+            name: 'Goblin',
+            health: 50,
+            damage: 5,
         );
     }
 }

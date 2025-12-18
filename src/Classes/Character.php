@@ -13,7 +13,7 @@ class Character
         public int $health = 100
     ) {
         if($health <= 0){
-            throw new InvalidArgumentException("Health must be greater than zero.");
+            $health = 0;
         }
     }
 

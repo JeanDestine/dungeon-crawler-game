@@ -27,7 +27,7 @@ class Player extends Character
 
     public function move(Position $delta): Position
     {
-        $this->position = $delta;
+        $this->position = clone $delta;
 
         return $this->position;
     }
@@ -68,19 +68,37 @@ class Player extends Character
 
     public static function fromArray(array $data): self
     {
+        if (empty($data)) {
+            return self::defaultPlayer();
+        }
+
         $p = new self(
-            health: (int)($data['hp'] ?? 25),
+            health: (int)($data['hp'] ?? 100),
             score: (int)($data['score'] ?? 0),
             position: new Position(
                 x: (int)($data['x'] ?? 0),
                 y: (int)($data['y'] ?? 0),
             ),
             name: (string)($data['name'] ?? 'Hero'),
-            weapon: Weapon::fromArray($data['weapon'] ?? []),
+            weapon: Weapon::fromArray($data['weapon'] ?? []) ?? new Fist(),
             type: CharacterType::PLAYER,
         );
 
         $p->inventory = array_values(array_map(fn($weaponData) => Weapon::fromArray($weaponData), $data['inventory'] ?? []));
         return $p;
+    }
+
+    private static function defaultPlayer(): self
+    {
+        $fists = new Fist();
+        return new self(
+            name: 'Hero',
+            type: CharacterType::PLAYER,
+            health: 100,
+            score: 0,
+            weapon: $fists,
+            inventory: [$fists],
+            position: new Position(0, 0)
+        );
     }
 }
